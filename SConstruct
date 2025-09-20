@@ -1,0 +1,66 @@
+#!/usr/bin/env python
+import os
+import sys
+
+env = SConscript("godot-cpp/SConstruct")
+
+# For reference:
+# - CCFLAGS are compilation flags shared between C and C++
+# - CFLAGS are for C-specific compilation flags
+# - CXXFLAGS are for C++-specific compilation flags
+# - CPPFLAGS are for pre-processor flags
+# - CPPDEFINES are for pre-processor defines
+# - LINKFLAGS are for linking flags
+
+# tweak this if you want to use different folders, or more folders, to store your source code in.
+env.Append(CPPPATH=["src/"])
+sources = Glob("src/*.cpp")
+
+if env["platform"] == "macos":
+    library = env.SharedLibrary(
+        "demo/bin/libgdexample.{}.{}.framework/libgdexample.{}.{}".format(
+            env["platform"], env["target"], env["platform"], env["target"]
+        ),
+        source=sources,
+    )
+elif env["platform"] == "ios":
+    if env["ios_simulator"]:
+        library = env.StaticLibrary(
+            "demo/bin/libgdexample.{}.{}.simulator.a".format(env["platform"], env["target"]),
+            source=sources,
+        )
+    else:
+        library = env.StaticLibrary(
+            "demo/bin/libgdexample.{}.{}.a".format(env["platform"], env["target"]),
+            source=sources,
+        )
+elif env["platform"] == "web":
+    library = env.SharedLibrary(
+        "demo/bin/libgdexample{}{}".format(env["suffix"], env["SHLIBSUFFIX"]),
+        source=sources,
+    )
+    # Treu qualsevol pista de pthreads que hagi caigut a les flags
+    def _strip_pthreads(lst):
+        out = []
+        for f in lst or []:
+            s = str(f)
+            if ("-sPTHREADS=1" in s) or ("-s SHARED_MEMORY=1" in s) or ("-pthread" in s) or ("pthread" == s):
+                continue
+            out.append(f)
+        return out
+
+    for k in ("CCFLAGS", "CXXFLAGS", "LINKFLAGS"):
+        env[k] = _strip_pthreads(env.get(k, []))
+
+    # I ara força explícitament NO threads
+    env.Append(CCFLAGS=["-sUSE_PTHREADS=0"])
+    env.Append(LINKFLAGS=["-sUSE_PTHREADS=0", "-sALLOW_MEMORY_GROWTH=1"])
+    env.Append(CPPDEFINES=["NO_PTHREADS"])
+
+else:
+    library = env.SharedLibrary(
+        "demo/bin/libgdexample{}{}".format(env["suffix"], env["SHLIBSUFFIX"]),
+        source=sources,
+    )
+
+Default(library)

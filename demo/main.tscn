@@ -1,0 +1,14 @@
+[gd_scene load_steps=3 format=3 uid="uid://dk2yewb257i2t"]
+
+[ext_resource type="Texture2D" uid="uid://byqxorv5bps6x" path="res://icon.svg" id="1_ig7tw"]
+[ext_resource type="Script" uid="uid://dvvhvsaar2y4c" path="res://gd_example.gd" id="2_0xm2m"]
+
+[node name="Main" type="Node2D"]
+
+[node name="GDExample" type="GDExample" parent="."]
+amplitude = 80.0
+speed = 3.0
+texture = ExtResource("1_ig7tw")
+script = ExtResource("2_0xm2m")
+
+[connection signal="position_changed" from="GDExample" to="GDExample" method="_on_position_changed"]
