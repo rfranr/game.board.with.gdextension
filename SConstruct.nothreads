@@ -16,6 +16,7 @@ env = SConscript("godot-cpp/SConstruct")
 env.Append(CPPPATH=["src/"])
 sources = Glob("src/*.cpp")
 
+
 if env["platform"] == "macos":
     library = env.SharedLibrary(
         "demo/bin/libgdexample.{}.{}.framework/libgdexample.{}.{}".format(
@@ -39,6 +40,24 @@ elif env["platform"] == "web":
         "demo/bin/libgdexample{}{}".format(env["suffix"], env["SHLIBSUFFIX"]),
         source=sources,
     )
+    # Treu qualsevol pista de pthreads que hagi caigut a les flags
+    def _strip_pthreads(lst):
+        out = []
+        for f in lst or []:
+            s = str(f)
+            if ("-sPTHREADS=1" in s) or ("-s SHARED_MEMORY=1" in s) or ("-pthread" in s) or ("pthread" == s):
+                continue
+            out.append(f)
+        return out
+
+    for k in ("CCFLAGS", "CXXFLAGS", "LINKFLAGS"):
+        env[k] = _strip_pthreads(env.get(k, []))
+
+    # I ara força explícitament NO threads
+    env.Append(CCFLAGS=["-sUSE_PTHREADS=0"])
+    env.Append(LINKFLAGS=["-sUSE_PTHREADS=0", "-sALLOW_MEMORY_GROWTH=1"])
+    env.Append(CPPDEFINES=["NO_PTHREADS"])
+
 else:
     library = env.SharedLibrary(
         "demo/bin/libgdexample{}{}".format(env["suffix"], env["SHLIBSUFFIX"]),

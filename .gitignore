@@ -4,3 +4,7 @@
 .sconsign.dblite
 demo/bin/*.so
 demo/bin/*.wasm
+src/*.o
+src/*.o
+src/gdexample.o
+src/register_types.o
